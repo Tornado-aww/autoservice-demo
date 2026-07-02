@@ -583,13 +583,40 @@
       ownerReport.textContent = 'Отчет владельцу';
     }
 
+    function isRudeOrNoise(text) {
+      const lower = text.toLowerCase().trim();
+      const rudeWords = ['блять', 'бляд', 'хз', 'хзшка', 'нах', 'пох', 'еб', 'сука'];
+      const hasRudeWord = rudeWords.some(word => lower.includes(word));
+      const tooShort = lower.length < 3;
+      return hasRudeWord || tooShort;
+    }
+
+    function isCarInfo(text) {
+      const lower = text.toLowerCase();
+      const brands = ['bmw', 'mercedes', 'audi', 'toyota', 'lexus', 'kia', 'hyundai', 'porsche', 'порш', 'лада', 'ваз', 'nissan', 'volkswagen', 'camry', 'солярис', 'elantra'];
+      return /\b\d{4}\b/.test(lower) || lower.includes('год') || lower.includes('911') || brands.some(brand => lower.includes(brand));
+    }
+
+    function isServiceInfo(text) {
+      const lower = text.toLowerCase();
+      const services = ['диагност', 'полиров', 'детейл', 'ремонт', 'шиномонтаж', 'переоб', 'покрас', 'бампер', 'кузов', 'химчист', 'керамик', 'оклей', 'пленк', 'вмятин', 'царап'];
+      return services.some(service => lower.includes(service));
+    }
+
+    function isTimeInfo(text) {
+      const lower = text.toLowerCase();
+      return /\b\d{1,2}[:.]\d{2}\b/.test(lower) || /\b\d{1,2}\b/.test(lower) || ['сегодня', 'завтра', 'послезавтра', 'утром', 'днем', 'днём', 'вечером', 'выходн', 'понедельник', 'вторник', 'сред', 'четверг', 'пятниц', 'суббот', 'воскрес'].some(word => lower.includes(word));
+    }
+
     function getManualReply(text) {
       const lower = text.toLowerCase();
+      if (isRudeOrNoise(text)) {
+        return 'Я могу помочь с записью. Напишите, пожалуйста, марку, модель и год авто, например: Porsche 911, 2018.';
+      }
 
       if (manualStep === 0) {
         statusText.textContent = 'Диалог';
-        const looksLikeCar = /\b\d{4}\b/.test(lower) || lower.includes('год') || lower.includes('911') || lower.includes('bmw') || lower.includes('mercedes') || lower.includes('audi') || lower.includes('toyota') || lower.includes('порш') || lower.includes('лада');
-        if (looksLikeCar) {
+        if (isCarInfo(text)) {
           manualLead.car = text;
           manualStep = 2;
           return 'Понял. Что нужно сделать: диагностика, полировка, детейлинг, ремонт или другая услуга?';
@@ -599,6 +626,9 @@
       }
 
       if (manualStep === 1) {
+        if (!isCarInfo(text)) {
+          return 'Чтобы мастер понял заявку, напишите марку, модель и год авто. Например: Toyota Camry, 2019.';
+        }
         manualLead.car = text;
         manualStep = 2;
         if (lower.includes('911') || lower.includes('porsche') || lower.includes('порш')) {
@@ -608,6 +638,9 @@
       }
 
       if (manualStep === 2) {
+        if (!isServiceInfo(text)) {
+          return 'Уточните, пожалуйста, услугу: диагностика, полировка, шиномонтаж, кузовной ремонт, химчистка или оклейка.';
+        }
         manualLead.service = text;
         manualLead.estimate = getEstimate(text);
         manualLead.urgency = getUrgency(text);
@@ -616,6 +649,9 @@
       }
 
       if (manualStep === 3) {
+        if (!isTimeInfo(text)) {
+          return 'Напишите удобное время или день. Например: сегодня после 18:00, завтра утром или в субботу.';
+        }
         manualLead.time = text;
         manualStep = 4;
         return 'Хорошо. Оставьте, пожалуйста, имя и номер телефона. Мастер подтвердит точное время.';
