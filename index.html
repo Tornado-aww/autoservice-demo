@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI-рецепционист для автосервиса</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --ink: #15181d;
+      --muted: #606975;
+      --line: #d9dee7;
+      --panel: #ffffff;
+      --green: #12a36a;
+      --green-dark: #08734b;
+      --blue: #2764d9;
+      --amber: #f6b84b;
+      --dark: #202833;
+      --soft: #edf4ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, Segoe UI, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 340px 1fr;
+    }
+    aside {
+      background: var(--dark);
+      color: white;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .brand {
+      font-size: 26px;
+      line-height: 1.05;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+    .subtitle {
+      color: #c7d1dd;
+      line-height: 1.5;
+      font-size: 15px;
+    }
+    .price {
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 8px;
+      padding: 16px;
+      background: rgba(255,255,255,.06);
+    }
+    .price strong {
+      display: block;
+      font-size: 28px;
+      margin-bottom: 6px;
+    }
+    .points {
+      display: grid;
+      gap: 10px;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+      color: #eef4fb;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+    .points li::before {
+      content: "✓ ";
+      color: var(--amber);
+      font-weight: 800;
+    }
+    main {
+      padding: 28px;
+      display: grid;
+      grid-template-columns: minmax(320px, 520px) minmax(360px, 1fr);
+      gap: 22px;
+      align-items: start;
+    }
+    .toolbar {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 30px;
+      letter-spacing: 0;
+    }
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    button {
+      border: 0;
+      border-radius: 8px;
+      background: var(--blue);
+      color: white;
+      padding: 11px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      min-height: 42px;
+    }
+    button.secondary {
+      color: var(--ink);
+      background: white;
+      border: 1px solid var(--line);
+    }
+    .scenario-bar {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(140px, 1fr));
+      gap: 10px;
+    }
+    .scenario {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+      padding: 12px;
+      cursor: pointer;
+      min-height: 78px;
+    }
+    .scenario.active {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 2px rgba(39, 100, 217, .12);
+    }
+    .scenario strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+    .scenario span {
+      color: var(--muted);
+      display: block;
+      font-size: 13px;
+      line-height: 1.3;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .panel-head {
+      min-height: 58px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+    }
+    .panel-title {
+      font-size: 15px;
+      font-weight: 800;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      border-radius: 999px;
+      padding: 0 10px;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--green-dark);
+      background: #e6f7ef;
+    }
+    .chat {
+      height: 590px;
+      display: flex;
+      flex-direction: column;
+    }
+    .messages {
+      flex: 1;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: linear-gradient(#fbfcfe, #f2f5f9);
+      overflow: auto;
+    }
+    .msg {
+      max-width: 82%;
+      padding: 12px 14px;
+      border-radius: 8px;
+      line-height: 1.42;
+      font-size: 15px;
+      box-shadow: 0 1px 0 rgba(0,0,0,.05);
+    }
+    .client {
+      align-self: flex-start;
+      background: white;
+      border: 1px solid var(--line);
+    }
+    .bot {
+      align-self: flex-end;
+      background: #dff3e9;
+      border: 1px solid #c0e8d5;
+    }
+    .inputbar {
+      border-top: 1px solid var(--line);
+      padding: 12px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+    }
+    input {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 12px;
+      min-height: 42px;
+      font: inherit;
+    }
+    .crm {
+      display: grid;
+      gap: 14px;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .metric {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      min-height: 92px;
+    }
+    .metric span {
+      color: var(--muted);
+      display: block;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    .metric strong {
+      font-size: 26px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 12px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      background: #fafbfc;
+    }
+    .status {
+      display: inline-flex;
+      border-radius: 999px;
+      padding: 5px 9px;
+      background: var(--soft);
+      color: var(--blue);
+      font-weight: 800;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .money {
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .owner-panel {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      padding: 14px;
+    }
+    .owner-item {
+      min-height: 70px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcfe;
+    }
+    .owner-item strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+    .owner-item span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .notice {
+      padding: 14px 16px;
+      line-height: 1.45;
+      color: var(--muted);
+      font-size: 14px;
+      border-top: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+    @media (max-width: 980px) {
+      .app { grid-template-columns: 1fr; }
+      aside { padding: 22px; }
+      main { grid-template-columns: 1fr; padding: 18px; }
+      .toolbar { align-items: flex-start; flex-direction: column; }
+      .scenario-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .chat { height: 560px; }
+    }
+    @media (max-width: 560px) {
+      .metrics { grid-template-columns: 1fr; }
+      .scenario-bar { grid-template-columns: 1fr; }
+      .owner-panel { grid-template-columns: 1fr; }
+      h1 { font-size: 24px; }
+      .brand { font-size: 24px; }
+      .msg { max-width: 94%; }
+      table { font-size: 13px; }
+      th:nth-child(4), td:nth-child(4), th:nth-child(5), td:nth-child(5) { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <div>
+        <div class="brand">AI-рецепционист для автосервиса</div>
+        <p class="subtitle">Демо продаваемой автоматизации: клиент пишет, система отвечает, собирает данные по авто и создает заявку для мастера.</p>
+      </div>
+      <div class="price">
+        <strong>$500+</strong>
+        <span>за установку первой версии</span>
+      </div>
+      <ul class="points">
+        <li>Ответ клиенту за 5 секунд</li>
+        <li>Сбор услуги, авто, времени и контакта</li>
+        <li>Заявка в CRM или Google Sheets</li>
+        <li>Уведомление мастера в Telegram</li>
+        <li>Ежедневный отчет владельцу</li>
+      </ul>
+    </aside>
+
+    <main>
+      <div class="toolbar">
+        <h1>Демо обработки заявки</h1>
+        <div class="actions">
+          <button id="runDemo">Запустить демо</button>
+          <button class="secondary" id="resetDemo">Сбросить</button>
+        </div>
+      </div>
+
+      <section class="scenario-bar" aria-label="Сценарии услуг">
+        <div class="scenario active" data-scenario="polishing"><strong>Полировка</strong><span>Средний чек $250-600</span></div>
+        <div class="scenario" data-scenario="tires"><strong>Шиномонтаж</strong><span>Быстрая запись сегодня</span></div>
+        <div class="scenario" data-scenario="diagnostic"><strong>Диагностика</strong><span>Превращает вопрос в визит</span></div>
+        <div class="scenario" data-scenario="body"><strong>Кузовной ремонт</strong><span>Высокий чек и фото авто</span></div>
+      </section>
+
+      <section class="panel chat" aria-label="Переписка с клиентом">
+        <div class="panel-head">
+          <div class="panel-title">WhatsApp / Telegram</div>
+          <span class="badge">AI online</span>
+        </div>
+        <div class="messages" id="messages"></div>
+        <div class="inputbar">
+          <input id="manualInput" value="Здравствуйте, сколько стоит полировка кузова?" aria-label="Сообщение клиента">
+          <button id="sendManual">Отправить</button>
+        </div>
+      </section>
+
+      <section class="crm">
+        <div class="metrics">
+          <div class="metric"><span>Новые лиды</span><strong id="leadsCount">0</strong></div>
+          <div class="metric"><span>Средний ответ</span><strong>5 сек</strong></div>
+          <div class="metric"><span>Статус</span><strong id="statusText">Готов</strong></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">CRM-заявки</div>
+            <span class="badge">Google Sheets / AmoCRM</span>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Клиент</th>
+                <th>Заявка</th>
+                <th>Чек</th>
+                <th>Срочность</th>
+                <th>Статус</th>
+              </tr>
+            </thead>
+            <tbody id="crmRows">
+              <tr>
+                <td colspan="5">Пока нет заявок. Запустите демо.</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="notice" id="notice">Менеджер получит уведомление, когда заявка будет заполнена.</div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Что видит владелец</div>
+            <span class="badge">Контроль заявок</span>
+          </div>
+          <div class="owner-panel">
+            <div class="owner-item"><strong id="ownerSpeed">Ответ за 5 секунд</strong><span>Клиент не ждет менеджера и не уходит к конкурентам.</span></div>
+            <div class="owner-item"><strong id="ownerData">Данные собраны</strong><span>Авто, услуга, время и контакт попадают в одну карточку.</span></div>
+            <div class="owner-item"><strong id="ownerNext">Следующий шаг</strong><span>Мастер сразу понимает, что нужно сделать.</span></div>
+            <div class="owner-item"><strong id="ownerReport">Отчет вечером</strong><span>Владелец видит лиды, записи и потерянные обращения.</span></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const messages = document.getElementById('messages');
+    const rows = document.getElementById('crmRows');
+    const leadsCount = document.getElementById('leadsCount');
+    const statusText = document.getElementById('statusText');
+    const notice = document.getElementById('notice');
+    const ownerSpeed = document.getElementById('ownerSpeed');
+    const ownerData = document.getElementById('ownerData');
+    const ownerNext = document.getElementById('ownerNext');
+    const ownerReport = document.getElementById('ownerReport');
+    const scenarios = {
+      polishing: {
+        input: 'Здравствуйте, сколько стоит полировка кузова?',
+        service: 'Диагностика полировки',
+        estimate: '$250-600',
+        urgency: 'Теплый лид',
+        car: 'BMW 3, 2020',
+        time: 'Завтра до обеда',
+        next: 'Подтвердить время диагностики',
+        script: [
+          ['client', 'Здравствуйте, сколько стоит полировка кузова?'],
+          ['bot', 'Здравствуйте. Подскажу. Какая у вас марка, модель и год авто?'],
+          ['client', 'BMW 3, 2020.'],
+          ['bot', 'Спасибо. Нужна легкая полировка, восстановительная или сначала диагностика состояния лака?'],
+          ['client', 'Лучше диагностику.'],
+          ['bot', 'Можем записать вас на диагностику. Какой день удобнее: сегодня после 17:00 или завтра до обеда?'],
+          ['client', 'Завтра до обеда.'],
+          ['bot', 'Отлично. Оставьте, пожалуйста, имя и номер телефона. Мастер подтвердит точное время.'],
+          ['client', 'Алексей, +7 999 123-45-67.'],
+          ['bot', 'Заявку передал мастеру. Он подтвердит время. Спасибо!']
+        ]
+      },
+      tires: {
+        input: 'Нужно переобуть Audi сегодня',
+        service: 'Шиномонтаж',
+        estimate: '$40-90',
+        urgency: 'Сегодня',
+        car: 'Audi A6, 2018',
+        time: 'Сегодня после 18:00',
+        next: 'Предложить ближайшее окно',
+        script: [
+          ['client', 'Нужно переобуть Audi сегодня'],
+          ['bot', 'Понял. Уточните модель, размер колес и нужен ли сезонный пакет с балансировкой?'],
+          ['client', 'Audi A6, R18, нужна балансировка.'],
+          ['bot', 'Есть окно сегодня после 18:00. Записать вас?'],
+          ['client', 'Да, запишите.'],
+          ['bot', 'Оставьте имя и телефон. Мастер подтвердит точное время.'],
+          ['client', 'Игорь, +7 999 444-22-11.'],
+          ['bot', 'Заявку передал мастеру. Он подтвердит запись.']
+        ]
+      },
+      diagnostic: {
+        input: 'Горит чек, нужна диагностика',
+        service: 'Компьютерная диагностика',
+        estimate: '$30-120',
+        urgency: 'Высокая',
+        car: 'Toyota Camry, 2019',
+        time: 'Сегодня',
+        next: 'Позвонить и уточнить симптомы',
+        script: [
+          ['client', 'Горит чек, нужна диагностика'],
+          ['bot', 'Понял. Напишите марку, модель, год авто и как давно появилась ошибка.'],
+          ['client', 'Toyota Camry 2019, загорелась вчера.'],
+          ['bot', 'Можно начать с компьютерной диагностики. Вам удобнее сегодня или завтра?'],
+          ['client', 'Сегодня.'],
+          ['bot', 'Хорошо. Оставьте имя и телефон, мастер уточнит симптомы и время приезда.'],
+          ['client', 'Марина, +7 999 888-10-10.'],
+          ['bot', 'Заявку создал. Мастер скоро свяжется.']
+        ]
+      },
+      body: {
+        input: 'Сколько будет стоить покрасить бампер?',
+        service: 'Кузовной ремонт',
+        estimate: '$180-500',
+        urgency: 'Нужны фото',
+        car: 'Mercedes E-class, 2020',
+        time: 'На этой неделе',
+        next: 'Попросить фото повреждения',
+        script: [
+          ['client', 'Сколько будет стоить покрасить бампер?'],
+          ['bot', 'Сориентируем по вилке. Какая марка, модель и год авто?'],
+          ['client', 'Mercedes E-class 2020.'],
+          ['bot', 'Для точной оценки нужны 2-3 фото повреждения и цвет детали. Можете отправить фото?'],
+          ['client', 'Да, отправлю. Хочу на этой неделе.'],
+          ['bot', 'Отлично. Оставьте имя и телефон, мастер посмотрит фото и даст оценку.'],
+          ['client', 'Сергей, +7 999 777-55-33.'],
+          ['bot', 'Заявку передал мастеру. Он запросит фото и рассчитает стоимость.']
+        ]
+      }
+    };
+    let activeScenario = scenarios.polishing;
+    let running = false;
+    let manualStep = 0;
+    const manualLead = {
+      name: '',
+      phone: '',
+      car: '',
+      service: '',
+      time: '',
+      estimate: '',
+      urgency: ''
+    };
+
+    function addMessage(type, text) {
+      const bubble = document.createElement('div');
+      bubble.className = `msg ${type}`;
+      bubble.textContent = text;
+      messages.appendChild(bubble);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function createLead() {
+      rows.innerHTML = `
+        <tr>
+          <td>Алексей<br><small>+7 999 123-45-67</small></td>
+          <td>${activeScenario.car}<br><small>${activeScenario.service}</small></td>
+          <td><span class="money">${activeScenario.estimate}</span></td>
+          <td>${activeScenario.urgency}<br><small>${activeScenario.next}</small></td>
+          <td><span class="status">Новая заявка</span></td>
+        </tr>
+      `;
+      leadsCount.textContent = '1';
+      statusText.textContent = 'Лид создан';
+      notice.textContent = `Telegram мастеру: новая заявка, ${activeScenario.car}, ${activeScenario.service}, ${activeScenario.time}. ${activeScenario.next}.`;
+      updateOwnerPanel(activeScenario);
+    }
+
+    function createManualLead() {
+      rows.innerHTML = `
+        <tr>
+          <td>${manualLead.name || 'Клиент'}<br><small>${manualLead.phone || 'Телефон уточнить'}</small></td>
+          <td>${manualLead.car || 'Авто уточнить'}<br><small>${manualLead.service || 'Диагностика / консультация'}</small></td>
+          <td><span class="money">${manualLead.estimate || '$100-400'}</span></td>
+          <td>${manualLead.urgency || 'Новая'}<br><small>Связаться и подтвердить детали</small></td>
+          <td><span class="status">Новая заявка</span></td>
+        </tr>
+      `;
+      leadsCount.textContent = '1';
+      statusText.textContent = 'Лид создан';
+      notice.textContent = `Telegram мастеру: новая заявка, ${manualLead.car || 'авто уточнить'}, ${manualLead.service || 'услуга уточнить'}, ${manualLead.time || 'время уточнить'}.`;
+      updateOwnerPanel({
+        service: manualLead.service || 'Заявка из чата',
+        estimate: manualLead.estimate || '$100-400',
+        next: 'Связаться и подтвердить детали'
+      });
+    }
+
+    function updateOwnerPanel(data) {
+      ownerSpeed.textContent = 'Ответ за 5 секунд';
+      ownerData.textContent = `${data.service} в CRM`;
+      ownerNext.textContent = data.next || 'Следующий шаг назначен';
+      ownerReport.textContent = `Потенциальный чек ${data.estimate || '$100-400'}`;
+    }
+
+    function resetOwnerPanel() {
+      ownerSpeed.textContent = 'Ответ за 5 секунд';
+      ownerData.textContent = 'Данные собраны';
+      ownerNext.textContent = 'Следующий шаг';
+      ownerReport.textContent = 'Отчет владельцу';
+    }
+
+    function getManualReply(text) {
+      const lower = text.toLowerCase();
+
+      if (manualStep === 0) {
+        statusText.textContent = 'Диалог';
+        const looksLikeCar = /\b\d{4}\b/.test(lower) || lower.includes('год') || lower.includes('911') || lower.includes('bmw') || lower.includes('mercedes') || lower.includes('audi') || lower.includes('toyota') || lower.includes('порш') || lower.includes('лада');
+        if (looksLikeCar) {
+          manualLead.car = text;
+          manualStep = 2;
+          return 'Понял. Что нужно сделать: диагностика, полировка, детейлинг, ремонт или другая услуга?';
+        }
+        manualStep = 1;
+        return 'Здравствуйте. Подскажу. Какая у вас марка, модель и год авто?';
+      }
+
+      if (manualStep === 1) {
+        manualLead.car = text;
+        manualStep = 2;
+        if (lower.includes('911') || lower.includes('porsche') || lower.includes('порш')) {
+          return 'Отлично, Porsche 911. Что нужно сделать: диагностика, полировка, детейлинг, ремонт или другая услуга?';
+        }
+        return 'Спасибо. Что нужно сделать: диагностика, полировка, детейлинг, ремонт или другая услуга?';
+      }
+
+      if (manualStep === 2) {
+        manualLead.service = text;
+        manualLead.estimate = getEstimate(text);
+        manualLead.urgency = getUrgency(text);
+        manualStep = 3;
+        return 'Понял. Когда вам удобно приехать: сегодня, завтра или в другой день?';
+      }
+
+      if (manualStep === 3) {
+        manualLead.time = text;
+        manualStep = 4;
+        return 'Хорошо. Оставьте, пожалуйста, имя и номер телефона. Мастер подтвердит точное время.';
+      }
+
+      const phoneMatch = text.match(/(?:\+?\d[\d\s()\-]{6,}\d)/);
+      if (phoneMatch) {
+        manualLead.phone = phoneMatch[0];
+        manualLead.name = text.replace(phoneMatch[0], '').replace(/[,.]/g, '').trim() || 'Клиент';
+        createManualLead();
+        manualStep = 5;
+        return 'Спасибо, заявку передал мастеру. Он свяжется с вами и подтвердит время.';
+      }
+
+      return 'Принял. Чтобы завершить заявку, напишите, пожалуйста, имя и номер телефона.';
+    }
+
+    function getEstimate(text) {
+      const lower = text.toLowerCase();
+      if (lower.includes('шиномонтаж') || lower.includes('переоб')) return '$40-90';
+      if (lower.includes('диагност') || lower.includes('чек')) return '$30-120';
+      if (lower.includes('бампер') || lower.includes('покрас') || lower.includes('кузов')) return '$180-500';
+      if (lower.includes('полиров') || lower.includes('детейл')) return '$250-600';
+      return '$100-400';
+    }
+
+    function getUrgency(text) {
+      const lower = text.toLowerCase();
+      if (lower.includes('сегодня') || lower.includes('срочно')) return 'Высокая';
+      if (lower.includes('фото') || lower.includes('покрас')) return 'Нужна оценка';
+      return 'Теплый лид';
+    }
+
+    function reset() {
+      running = false;
+      manualStep = 0;
+      manualLead.name = '';
+      manualLead.phone = '';
+      manualLead.car = '';
+      manualLead.service = '';
+      manualLead.time = '';
+      manualLead.estimate = '';
+      manualLead.urgency = '';
+      messages.innerHTML = '';
+      rows.innerHTML = '<tr><td colspan="5">Пока нет заявок. Запустите демо.</td></tr>';
+      leadsCount.textContent = '0';
+      statusText.textContent = 'Готов';
+      notice.textContent = 'Менеджер получит уведомление, когда заявка будет заполнена.';
+      resetOwnerPanel();
+    }
+
+    async function runDemo() {
+      if (running) return;
+      reset();
+      running = true;
+      statusText.textContent = 'Диалог';
+      for (let i = 0; i < activeScenario.script.length; i++) {
+        await new Promise(resolve => setTimeout(resolve, i === 0 ? 120 : 720));
+        addMessage(activeScenario.script[i][0], activeScenario.script[i][1]);
+      }
+      await new Promise(resolve => setTimeout(resolve, 500));
+      createLead();
+      running = false;
+    }
+
+    document.getElementById('runDemo').addEventListener('click', runDemo);
+    document.getElementById('resetDemo').addEventListener('click', reset);
+    document.querySelectorAll('.scenario').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.scenario').forEach(item => item.classList.remove('active'));
+        card.classList.add('active');
+        activeScenario = scenarios[card.dataset.scenario];
+        document.getElementById('manualInput').value = activeScenario.input;
+        reset();
+      });
+    });
+    document.getElementById('sendManual').addEventListener('click', () => {
+      const input = document.getElementById('manualInput');
+      const text = input.value.trim();
+      if (!text) return;
+      addMessage('client', text);
+      input.value = '';
+      setTimeout(() => addMessage('bot', getManualReply(text)), 450);
+    });
+
+    document.getElementById('manualInput').addEventListener('keydown', event => {
+      if (event.key === 'Enter') {
+        document.getElementById('sendManual').click();
+      }
+    });
+
+    reset();
+  </script>
+</body>
+</html>
