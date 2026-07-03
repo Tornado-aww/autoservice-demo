@@ -132,6 +132,27 @@
       background: white;
       border: 1px solid var(--line);
     }
+    .lang-toggle {
+      display: inline-grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      padding: 4px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 8px;
+      background: rgba(255,255,255,.06);
+      width: max-content;
+    }
+    .lang-toggle button {
+      min-height: 34px;
+      padding: 7px 10px;
+      background: transparent;
+      color: #d9e3ed;
+      border-radius: 6px;
+    }
+    .lang-toggle button.active {
+      background: white;
+      color: var(--dark);
+    }
     .setup-strip {
       grid-column: 1 / -1;
       display: grid;
@@ -471,6 +492,10 @@
         <div class="brand">AI-рецепционист для автосервиса</div>
         <p class="subtitle">Демо системы для Казахстана: WhatsApp-заявки не теряются, клиент получает быстрый ответ, мастер видит готовую карточку.</p>
       </div>
+      <div class="lang-toggle" aria-label="Выбор языка">
+        <button id="langRu" class="active" type="button">RU</button>
+        <button id="langKz" type="button">KZ</button>
+      </div>
       <div class="price">
         <strong>от 150 000 ₸</strong>
         <span>пилотный запуск под сервис</span>
@@ -580,7 +605,7 @@
     const ownerData = document.getElementById('ownerData');
     const ownerNext = document.getElementById('ownerNext');
     const ownerReport = document.getElementById('ownerReport');
-    const scenarios = {
+    const scenariosRu = {
       polishing: {
         input: 'Здравствуйте, сколько стоит полировка кузова?',
         service: 'Диагностика полировки',
@@ -660,6 +685,88 @@
         ]
       }
     };
+    const scenariosKz = {
+      polishing: {
+        input: 'Сәлеметсіз бе, кузов полировкасы қанша тұрады?',
+        service: 'Полировка диагностикасы',
+        estimate: '120-280 мың ₸',
+        urgency: 'Жылы лид',
+        car: 'BMW 3, 2020',
+        time: 'Ертең түске дейін',
+        next: 'Диагностика уақытын растау',
+        script: [
+          ['client', 'Сәлеметсіз бе, кузов полировкасы қанша тұрады?'],
+          ['bot', 'Сәлеметсіз бе. Көліктің маркасын, моделін және жылын жазыңыз.'],
+          ['client', 'BMW 3, 2020.'],
+          ['bot', 'Рақмет. Жеңіл полировка керек пе, қалпына келтіру полировкасы ма, әлде алдымен лак жағдайын диагностика жасаймыз ба?'],
+          ['client', 'Алдымен диагностика жақсы.'],
+          ['bot', 'Диагностикаға жазуға болады. Қай уақыт ыңғайлы: бүгін 17:00-ден кейін немесе ертең түске дейін?'],
+          ['client', 'Ертең түске дейін.'],
+          ['bot', 'Жақсы. Атыңыз бен телефон нөміріңізді қалдырыңыз. Мастер нақты уақытты растайды.'],
+          ['client', 'Алексей, +7 777 123-45-67.'],
+          ['bot', 'Өтінімді мастерге жібердім. Ол уақытты растайды. Рақмет!']
+        ]
+      },
+      tires: {
+        input: 'Audi көлігін бүгін ауыстыру керек',
+        service: 'Шиномонтаж',
+        estimate: '18-40 мың ₸',
+        urgency: 'Бүгін',
+        car: 'Audi A6, 2018',
+        time: 'Бүгін 18:00-ден кейін',
+        next: 'Жақын бос уақытты ұсыну',
+        script: [
+          ['client', 'Audi көлігін бүгін ауыстыру керек'],
+          ['bot', 'Түсіндім. Модель, дөңгелек өлшемі және балансировка керек пе?'],
+          ['client', 'Audi A6, R18, балансировка керек.'],
+          ['bot', 'Бүгін 18:00-ден кейін бос уақыт бар. Жазайын ба?'],
+          ['client', 'Иә, жазыңыз.'],
+          ['bot', 'Атыңыз бен телефон нөміріңізді қалдырыңыз. Мастер нақты уақытты растайды.'],
+          ['client', 'Игорь, +7 701 444-22-11.'],
+          ['bot', 'Өтінімді мастерге жібердім. Ол жазбаны растайды.']
+        ]
+      },
+      diagnostic: {
+        input: 'Check жанып тұр, диагностика керек',
+        service: 'Компьютерлік диагностика',
+        estimate: '15-55 мың ₸',
+        urgency: 'Жоғары',
+        car: 'Toyota Camry, 2019',
+        time: 'Бүгін',
+        next: 'Қоңырау шалып симптомдарды нақтылау',
+        script: [
+          ['client', 'Check жанып тұр, диагностика керек'],
+          ['bot', 'Түсіндім. Көліктің маркасын, моделін, жылын және қате қашан шыққанын жазыңыз.'],
+          ['client', 'Toyota Camry 2019, кеше жанды.'],
+          ['bot', 'Компьютерлік диагностикадан бастауға болады. Бүгін ыңғайлы ма, әлде ертең бе?'],
+          ['client', 'Бүгін.'],
+          ['bot', 'Жақсы. Атыңыз бен телефон нөміріңізді қалдырыңыз, мастер уақытты нақтылайды.'],
+          ['client', 'Марина, +7 707 888-10-10.'],
+          ['bot', 'Өтінім жасалды. Мастер жақында хабарласады.']
+        ]
+      },
+      body: {
+        input: 'Бамперді бояу қанша тұрады?',
+        service: 'Кузов жөндеу',
+        estimate: '80-230 мың ₸',
+        urgency: 'Фото керек',
+        car: 'Mercedes E-class, 2020',
+        time: 'Осы аптада',
+        next: 'Зақым фотоcын сұрау',
+        script: [
+          ['client', 'Бамперді бояу қанша тұрады?'],
+          ['bot', 'Баға диапазонын айту үшін көліктің маркасын, моделін және жылын жазыңыз.'],
+          ['client', 'Mercedes E-class 2020.'],
+          ['bot', 'Дәл бағалау үшін зақымның 2-3 фотосы және деталь түсі керек. Фото жібере аласыз ба?'],
+          ['client', 'Иә, жіберемін. Осы аптада керек.'],
+          ['bot', 'Жақсы. Атыңыз бен телефон нөміріңізді қалдырыңыз, мастер фотоны қарап бағасын айтады.'],
+          ['client', 'Сергей, +7 705 777-55-33.'],
+          ['bot', 'Өтінімді мастерге жібердім. Ол фото сұрап, бағасын есептейді.']
+        ]
+      }
+    };
+    let currentLang = 'ru';
+    let scenarios = scenariosRu;
     let activeScenario = scenarios.polishing;
     let running = false;
     let manualStep = 0;
@@ -718,17 +825,18 @@
     }
 
     function updateOwnerPanel(data) {
-      ownerSpeed.textContent = 'Ответ за 5 секунд';
-      ownerData.textContent = `${data.service} в CRM`;
+      ownerSpeed.textContent = uiText[currentLang].ownerSpeed;
+      ownerData.textContent = `${data.service} ${currentLang === 'kz' ? 'CRM-ге түсті' : 'в CRM'}`;
       ownerNext.textContent = data.next || 'Следующий шаг назначен';
-      ownerReport.textContent = `Потенциальный чек ${data.estimate || '45-180 тыс. ₸'}`;
+      ownerReport.textContent = `${currentLang === 'kz' ? 'Ықтимал чек' : 'Потенциальный чек'} ${data.estimate || '45-180 тыс. ₸'}`;
     }
 
     function resetOwnerPanel() {
-      ownerSpeed.textContent = 'Ответ за 5 секунд';
-      ownerData.textContent = 'Данные собраны';
-      ownerNext.textContent = 'Следующий шаг';
-      ownerReport.textContent = 'Отчет владельцу';
+      const text = uiText[currentLang];
+      ownerSpeed.textContent = text.ownerSpeed;
+      ownerData.textContent = text.ownerData;
+      ownerNext.textContent = text.ownerNext;
+      ownerReport.textContent = text.ownerReport;
     }
 
     function isRudeOrNoise(text) {
@@ -923,6 +1031,120 @@
       return 'Теплый лид';
     }
 
+    const uiText = {
+      ru: {
+        brand: 'AI-рецепционист для автосервиса',
+        subtitle: 'Демо системы для Казахстана: WhatsApp-заявки не теряются, клиент получает быстрый ответ, мастер видит готовую карточку.',
+        lead: 'Выберите сценарий или напишите в чат как клиент. Система уточнит авто, услугу, время и контакт, затем создаст заявку для мастера.',
+        run: 'Попробовать как клиент',
+        reset: 'Сбросить',
+        mobile: 'Откройте сценарий и нажмите демо',
+        chatTitle: 'Диалог в WhatsApp / Telegram',
+        autoBadge: 'Автоответ включен',
+        leads: 'Сохраненные лиды',
+        avg: 'Средний ответ',
+        status: 'Статус',
+        ready: 'Готов',
+        card: 'Карточка заявки',
+        owner: 'Что видит владелец',
+        control: 'Контроль заявок',
+        empty: 'Пока нет заявок. Запустите демо.',
+        notice: 'Менеджер получит уведомление, когда заявка будет заполнена.',
+        ownerSpeed: 'Ответ за 5 секунд',
+        ownerSpeedText: 'Клиент не ждет менеджера и не уходит к конкурентам.',
+        ownerData: 'Данные собраны',
+        ownerDataText: 'Авто, услуга, время и контакт попадают в одну карточку.',
+        ownerNext: 'Мастер уведомлен',
+        ownerNextText: 'Сотрудник сразу понимает, что нужно сделать дальше.',
+        ownerReport: 'Контроль лидов',
+        ownerReportText: 'Владелец видит новые обращения и следующий шаг по каждой заявке.',
+        placeholder: 'Здравствуйте, сколько стоит полировка кузова?',
+        send: 'Отправить',
+        scenarios: [
+          ['Полировка', 'Средний чек 120-280 тыс. ₸'],
+          ['Шиномонтаж', 'Быстрая запись сегодня'],
+          ['Диагностика', 'Превращает вопрос в визит'],
+          ['Кузовной ремонт', 'Высокий чек и фото авто']
+        ]
+      },
+      kz: {
+        brand: 'Автосервиске арналған AI-рецепционист',
+        subtitle: 'Қазақстанға арналған демо: WhatsApp өтінімдері жоғалмайды, клиент тез жауап алады, мастер дайын карточканы көреді.',
+        lead: 'Сценарий таңдаңыз немесе клиент сияқты чатқа жазыңыз. Жүйе автоны, қызметті, уақытты және контактіні нақтылап, мастерге өтінім жасайды.',
+        run: 'Клиент ретінде көру',
+        reset: 'Тазалау',
+        mobile: 'Сценарийді таңдап, демоны басыңыз',
+        chatTitle: 'WhatsApp / Telegram диалогы',
+        autoBadge: 'Автожауап қосулы',
+        leads: 'Сақталған лидтер',
+        avg: 'Орташа жауап',
+        status: 'Күйі',
+        ready: 'Дайын',
+        card: 'Өтінім карточкасы',
+        owner: 'Иесі не көреді',
+        control: 'Өтінім бақылауы',
+        empty: 'Әзірге өтінім жоқ. Демоны іске қосыңыз.',
+        notice: 'Өтінім толғанда менеджерге хабарлама барады.',
+        ownerSpeed: '5 секундта жауап',
+        ownerSpeedText: 'Клиент менеджерді күтпейді және басқа сервиске кетпейді.',
+        ownerData: 'Деректер жиналды',
+        ownerDataText: 'Авто, қызмет, уақыт және контакт бір карточкаға түседі.',
+        ownerNext: 'Мастерге хабарланды',
+        ownerNextText: 'Қызметкер келесі қадамды бірден түсінеді.',
+        ownerReport: 'Лидтер бақылауы',
+        ownerReportText: 'Иесі жаңа өтінімдерді және әр өтінімнің келесі қадамын көреді.',
+        placeholder: 'Сәлеметсіз бе, кузов полировкасы қанша тұрады?',
+        send: 'Жіберу',
+        scenarios: [
+          ['Полировка', 'Орташа чек 120-280 мың ₸'],
+          ['Шиномонтаж', 'Бүгінге тез жазу'],
+          ['Диагностика', 'Сұрақты визитке айналдырады'],
+          ['Кузов жөндеу', 'Жоғары чек және авто фотосы']
+        ]
+      }
+    };
+
+    function applyLanguage(lang) {
+      currentLang = lang;
+      scenarios = lang === 'kz' ? scenariosKz : scenariosRu;
+      const selectedKey = document.querySelector('.scenario.active')?.dataset.scenario || 'polishing';
+      activeScenario = scenarios[selectedKey];
+      const text = uiText[lang];
+      document.querySelector('.brand').textContent = text.brand;
+      document.querySelector('.subtitle').textContent = text.subtitle;
+      document.querySelector('.lead').textContent = text.lead;
+      document.getElementById('runDemo').textContent = text.run;
+      document.getElementById('resetDemo').textContent = text.reset;
+      document.querySelector('.mobile-cta span').textContent = text.mobile;
+      document.getElementById('mobileRunDemo').textContent = lang === 'kz' ? 'Демо' : 'Демо';
+      document.querySelector('.chat .panel-title').textContent = text.chatTitle;
+      document.querySelector('.chat .badge').textContent = text.autoBadge;
+      document.querySelectorAll('.metric span')[0].textContent = text.leads;
+      document.querySelectorAll('.metric span')[1].textContent = text.avg;
+      document.querySelectorAll('.metric span')[2].textContent = text.status;
+      document.getElementById('statusText').textContent = text.ready;
+      document.querySelectorAll('.crm .panel-title')[0].textContent = text.card;
+      document.querySelectorAll('.crm .panel-title')[1].textContent = text.owner;
+      document.querySelectorAll('.crm .badge')[1].textContent = text.control;
+      ownerSpeed.textContent = text.ownerSpeed;
+      ownerSpeed.nextElementSibling.textContent = text.ownerSpeedText;
+      ownerData.textContent = text.ownerData;
+      ownerData.nextElementSibling.textContent = text.ownerDataText;
+      ownerNext.textContent = text.ownerNext;
+      ownerNext.nextElementSibling.textContent = text.ownerNextText;
+      ownerReport.textContent = text.ownerReport;
+      ownerReport.nextElementSibling.textContent = text.ownerReportText;
+      document.getElementById('manualInput').value = activeScenario.input || text.placeholder;
+      document.getElementById('sendManual').textContent = text.send;
+      document.querySelectorAll('.scenario').forEach((card, index) => {
+        card.querySelector('strong').textContent = text.scenarios[index][0];
+        card.querySelector('span').textContent = text.scenarios[index][1];
+      });
+      document.getElementById('langRu').classList.toggle('active', lang === 'ru');
+      document.getElementById('langKz').classList.toggle('active', lang === 'kz');
+      reset();
+    }
+
     function reset() {
       running = false;
       manualStep = 0;
@@ -934,10 +1156,10 @@
       manualLead.estimate = '';
       manualLead.urgency = '';
       messages.innerHTML = '';
-      rows.innerHTML = '<tr><td colspan="5">Пока нет заявок. Запустите демо.</td></tr>';
+      rows.innerHTML = `<tr><td colspan="5">${uiText[currentLang].empty}</td></tr>`;
       leadsCount.textContent = '0';
-      statusText.textContent = 'Готов';
-      notice.textContent = 'Менеджер получит уведомление, когда заявка будет заполнена.';
+      statusText.textContent = uiText[currentLang].ready;
+      notice.textContent = uiText[currentLang].notice;
       resetOwnerPanel();
     }
 
@@ -958,6 +1180,8 @@
     document.getElementById('runDemo').addEventListener('click', runDemo);
     document.getElementById('mobileRunDemo').addEventListener('click', runDemo);
     document.getElementById('resetDemo').addEventListener('click', reset);
+    document.getElementById('langRu').addEventListener('click', () => applyLanguage('ru'));
+    document.getElementById('langKz').addEventListener('click', () => applyLanguage('kz'));
     document.querySelectorAll('.scenario').forEach(card => {
       card.addEventListener('click', () => {
         document.querySelectorAll('.scenario').forEach(item => item.classList.remove('active'));
