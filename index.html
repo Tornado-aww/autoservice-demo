@@ -1020,6 +1020,17 @@
       return 'Принял. Чтобы завершить заявку, напишите, пожалуйста, имя и номер телефона.';
     }
 
+    function safeManualReply(text) {
+      try {
+        return getManualReply(text);
+      } catch (error) {
+        console.error(error);
+        return currentLang === 'kz'
+          ? 'Хабарламаңызды алдым. Өтінімді рәсімдеу үшін авто, қызмет, ыңғайлы уақыт және телефон нөміріңізді жазыңыз.'
+          : 'Сообщение получил. Чтобы оформить заявку, напишите авто, услугу, удобное время и номер телефона.';
+      }
+    }
+
     function getEstimate(text) {
       const lower = text.toLowerCase();
       if (lower.includes('шиномонтаж') || lower.includes('переоб')) return '18-40 тыс. ₸';
@@ -1202,7 +1213,7 @@
       if (!text) return;
       addMessage('client', text);
       input.value = '';
-      setTimeout(() => addMessage('bot', getManualReply(text)), 450);
+      setTimeout(() => addMessage('bot', safeManualReply(text)), 450);
     });
 
     document.getElementById('manualInput').addEventListener('keydown', event => {
