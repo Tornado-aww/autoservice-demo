@@ -864,11 +864,16 @@
       return /\b\d{1,2}[:.]\d{2}\b/.test(lower) || /\b\d{1,2}\b/.test(lower) || ['сегодня', 'завтра', 'послезавтра', 'утром', 'днем', 'днём', 'вечером', 'выходн', 'понедельник', 'вторник', 'сред', 'четверг', 'пятниц', 'суббот', 'воскрес'].some(word => lower.includes(word));
     }
 
+    function extractPhone(text) {
+      const match = text.match(/(?:\+?\d[\d\s()\-]{6,}\d)/);
+      return match ? match[0].trim() : '';
+    }
+
     function extractName(text, phone) {
       const withoutPhone = phone ? text.replace(phone, '') : text;
-      const nameMatch = withoutPhone.match(/(?:меня зовут|я|имя)\s+([А-Яа-яA-Za-z]{2,})/i);
+      const nameMatch = withoutPhone.match(/(?:меня зовут|зовут|имя)\s+([А-Яа-яA-Za-z]{2,})/i);
       if (nameMatch) return nameMatch[1].trim();
-      const commaName = withoutPhone.split(',').map(part => part.trim()).find(part => /^[А-Яа-яA-Za-z]{2,}$/.test(part));
+      const commaName = withoutPhone.split(',').map(part => part.trim()).reverse().find(part => /^[А-Яа-яA-Za-z]{2,}$/.test(part));
       return commaName || '';
     }
 
