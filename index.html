@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AI-рецепционист для автосервиса</title>
-  <meta name="demo-version" content="answers-fixed-2026-07-03-1538">
+  <meta name="demo-version" content="ru-stable-2026-07-03">
   <style>
     :root {
       color-scheme: light;
@@ -134,7 +134,7 @@
       border: 1px solid var(--line);
     }
     .lang-toggle {
-      display: inline-grid;
+      display: none;
       grid-template-columns: 1fr 1fr;
       gap: 4px;
       padding: 4px;
@@ -508,7 +508,7 @@
         <li>Уведомление мастера в WhatsApp/Telegram</li>
         <li>Отчет владельцу по входящим лидам</li>
       </ul>
-      <div class="aside-note">Это интерактивное демо. Реальный запуск адаптируется под ваши услуги, график, WhatsApp, Telegram, Google Sheets, AmoCRM или Bitrix24.<br><small>Версия: answers-fixed</small></div>
+      <div class="aside-note">Это интерактивное демо. Реальный запуск адаптируется под ваши услуги, график, WhatsApp, Telegram, Google Sheets, AmoCRM или Bitrix24.<br><small>Версия: RU stable</small></div>
     </aside>
 
     <main>
@@ -1131,18 +1131,18 @@
     };
 
     function applyLanguage(lang) {
-      currentLang = lang;
-      scenarios = lang === 'kz' ? scenariosKz : scenariosRu;
+      currentLang = 'ru';
+      scenarios = scenariosRu;
       const selectedKey = document.querySelector('.scenario.active')?.dataset.scenario || 'polishing';
       activeScenario = scenarios[selectedKey];
-      const text = uiText[lang];
+      const text = uiText.ru;
       document.querySelector('.brand').textContent = text.brand;
       document.querySelector('.subtitle').textContent = text.subtitle;
       document.querySelector('.lead').textContent = text.lead;
       document.getElementById('runDemo').textContent = text.run;
       document.getElementById('resetDemo').textContent = text.reset;
       document.querySelector('.mobile-cta span').textContent = text.mobile;
-      document.getElementById('mobileRunDemo').textContent = lang === 'kz' ? 'Демо' : 'Демо';
+      document.getElementById('mobileRunDemo').textContent = 'Демо';
       document.querySelector('.chat .panel-title').textContent = text.chatTitle;
       document.querySelector('.chat .badge').textContent = text.autoBadge;
       document.querySelectorAll('.metric span')[0].textContent = text.leads;
@@ -1166,8 +1166,8 @@
         card.querySelector('strong').textContent = text.scenarios[index][0];
         card.querySelector('span').textContent = text.scenarios[index][1];
       });
-      document.getElementById('langRu').classList.toggle('active', lang === 'ru');
-      document.getElementById('langKz').classList.toggle('active', lang === 'kz');
+      document.getElementById('langRu').classList.add('active');
+      document.getElementById('langKz').classList.remove('active');
       reset();
     }
 
@@ -1207,7 +1207,6 @@
     document.getElementById('mobileRunDemo').addEventListener('click', runDemo);
     document.getElementById('resetDemo').addEventListener('click', reset);
     document.getElementById('langRu').addEventListener('click', () => applyLanguage('ru'));
-    document.getElementById('langKz').addEventListener('click', () => applyLanguage('kz'));
     document.querySelectorAll('.scenario').forEach(card => {
       card.addEventListener('click', () => {
         document.querySelectorAll('.scenario').forEach(item => item.classList.remove('active'));
