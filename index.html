@@ -61,6 +61,13 @@
       font-size: 28px;
       margin-bottom: 6px;
     }
+    .aside-note {
+      color: #aebdca;
+      font-size: 13px;
+      line-height: 1.45;
+      border-top: 1px solid rgba(255,255,255,.14);
+      padding-top: 16px;
+    }
     .points {
       display: grid;
       gap: 10px;
@@ -95,6 +102,13 @@
       font-size: 30px;
       letter-spacing: 0;
     }
+    .lead {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.45;
+      max-width: 760px;
+      font-size: 15px;
+    }
     .actions {
       display: flex;
       gap: 8px;
@@ -114,6 +128,30 @@
       color: var(--ink);
       background: white;
       border: 1px solid var(--line);
+    }
+    .setup-strip {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(130px, 1fr));
+      gap: 10px;
+    }
+    .setup-item {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 74px;
+    }
+    .setup-item strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+    .setup-item span {
+      color: var(--muted);
+      display: block;
+      font-size: 13px;
+      line-height: 1.32;
     }
     .scenario-bar {
       grid-column: 1 / -1;
@@ -312,11 +350,13 @@
       aside { padding: 22px; }
       main { grid-template-columns: 1fr; padding: 18px; }
       .toolbar { align-items: flex-start; flex-direction: column; }
+      .setup-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .scenario-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .chat { height: 560px; }
     }
     @media (max-width: 560px) {
       .metrics { grid-template-columns: 1fr; }
+      .setup-strip { grid-template-columns: 1fr; }
       .scenario-bar { grid-template-columns: 1fr; }
       .owner-panel { grid-template-columns: 1fr; }
       h1 { font-size: 24px; }
@@ -332,32 +372,43 @@
     <aside>
       <div>
         <div class="brand">AI-рецепционист для автосервиса</div>
-        <p class="subtitle">Демо продаваемой автоматизации: клиент пишет, система отвечает, собирает данные по авто и создает заявку для мастера.</p>
+        <p class="subtitle">Демо системы для Казахстана: WhatsApp-заявки не теряются, клиент получает быстрый ответ, мастер видит готовую карточку.</p>
       </div>
       <div class="price">
-        <strong>$500+</strong>
-        <span>за установку первой версии</span>
+        <strong>от 150 000 ₸</strong>
+        <span>пилотный запуск под сервис</span>
       </div>
       <ul class="points">
         <li>Ответ клиенту за 5 секунд</li>
         <li>Сбор услуги, авто, времени и контакта</li>
         <li>Заявка в CRM или Google Sheets</li>
-        <li>Уведомление мастера в Telegram</li>
-        <li>Ежедневный отчет владельцу</li>
+        <li>Уведомление мастера в WhatsApp/Telegram</li>
+        <li>Отчет владельцу по входящим лидам</li>
       </ul>
+      <div class="aside-note">Это интерактивное демо. Реальный запуск адаптируется под ваши услуги, график, WhatsApp, Telegram, Google Sheets, AmoCRM или Bitrix24.</div>
     </aside>
 
     <main>
       <div class="toolbar">
-        <h1>Демо обработки заявки</h1>
+        <div>
+          <h1>Как заявка превращается в запись</h1>
+          <p class="lead">Выберите сценарий или напишите в чат как клиент. Система уточнит авто, услугу, время и контакт, затем создаст заявку для мастера.</p>
+        </div>
         <div class="actions">
-          <button id="runDemo">Запустить демо</button>
+          <button id="runDemo">Попробовать как клиент</button>
           <button class="secondary" id="resetDemo">Сбросить</button>
         </div>
       </div>
 
+      <section class="setup-strip" aria-label="Что подключаем">
+        <div class="setup-item"><strong>WhatsApp / Telegram</strong><span>Клиент пишет туда, где уже общается с сервисом.</span></div>
+        <div class="setup-item"><strong>Google Sheets / CRM</strong><span>Все обращения попадают в единую таблицу или CRM.</span></div>
+        <div class="setup-item"><strong>Уведомления мастеру</strong><span>Сотрудник получает авто, услугу, время и контакт.</span></div>
+        <div class="setup-item"><strong>Пилот за 3-5 дней</strong><span>Запуск без сложной перестройки текущих процессов.</span></div>
+      </section>
+
       <section class="scenario-bar" aria-label="Сценарии услуг">
-        <div class="scenario active" data-scenario="polishing"><strong>Полировка</strong><span>Средний чек $250-600</span></div>
+        <div class="scenario active" data-scenario="polishing"><strong>Полировка</strong><span>Средний чек 120-280 тыс. ₸</span></div>
         <div class="scenario" data-scenario="tires"><strong>Шиномонтаж</strong><span>Быстрая запись сегодня</span></div>
         <div class="scenario" data-scenario="diagnostic"><strong>Диагностика</strong><span>Превращает вопрос в визит</span></div>
         <div class="scenario" data-scenario="body"><strong>Кузовной ремонт</strong><span>Высокий чек и фото авто</span></div>
@@ -365,8 +416,8 @@
 
       <section class="panel chat" aria-label="Переписка с клиентом">
         <div class="panel-head">
-          <div class="panel-title">WhatsApp / Telegram</div>
-          <span class="badge">AI online</span>
+          <div class="panel-title">Диалог в WhatsApp / Telegram</div>
+          <span class="badge">Автоответ включен</span>
         </div>
         <div class="messages" id="messages"></div>
         <div class="inputbar">
@@ -377,15 +428,15 @@
 
       <section class="crm">
         <div class="metrics">
-          <div class="metric"><span>Новые лиды</span><strong id="leadsCount">0</strong></div>
+          <div class="metric"><span>Сохраненные лиды</span><strong id="leadsCount">0</strong></div>
           <div class="metric"><span>Средний ответ</span><strong>5 сек</strong></div>
           <div class="metric"><span>Статус</span><strong id="statusText">Готов</strong></div>
         </div>
 
         <div class="panel">
           <div class="panel-head">
-            <div class="panel-title">CRM-заявки</div>
-            <span class="badge">Google Sheets / AmoCRM</span>
+            <div class="panel-title">Карточка заявки</div>
+            <span class="badge">Sheets / CRM</span>
           </div>
           <table>
             <thead>
@@ -414,8 +465,8 @@
           <div class="owner-panel">
             <div class="owner-item"><strong id="ownerSpeed">Ответ за 5 секунд</strong><span>Клиент не ждет менеджера и не уходит к конкурентам.</span></div>
             <div class="owner-item"><strong id="ownerData">Данные собраны</strong><span>Авто, услуга, время и контакт попадают в одну карточку.</span></div>
-            <div class="owner-item"><strong id="ownerNext">Следующий шаг</strong><span>Мастер сразу понимает, что нужно сделать.</span></div>
-            <div class="owner-item"><strong id="ownerReport">Отчет вечером</strong><span>Владелец видит лиды, записи и потерянные обращения.</span></div>
+            <div class="owner-item"><strong id="ownerNext">Мастер уведомлен</strong><span>Сотрудник сразу понимает, что нужно сделать дальше.</span></div>
+            <div class="owner-item"><strong id="ownerReport">Контроль лидов</strong><span>Владелец видит новые обращения и следующий шаг по каждой заявке.</span></div>
           </div>
         </div>
       </section>
@@ -436,7 +487,7 @@
       polishing: {
         input: 'Здравствуйте, сколько стоит полировка кузова?',
         service: 'Диагностика полировки',
-        estimate: '$250-600',
+        estimate: '120-280 тыс. ₸',
         urgency: 'Теплый лид',
         car: 'BMW 3, 2020',
         time: 'Завтра до обеда',
@@ -450,14 +501,14 @@
           ['bot', 'Можем записать вас на диагностику. Какой день удобнее: сегодня после 17:00 или завтра до обеда?'],
           ['client', 'Завтра до обеда.'],
           ['bot', 'Отлично. Оставьте, пожалуйста, имя и номер телефона. Мастер подтвердит точное время.'],
-          ['client', 'Алексей, +7 999 123-45-67.'],
+          ['client', 'Алексей, +7 777 123-45-67.'],
           ['bot', 'Заявку передал мастеру. Он подтвердит время. Спасибо!']
         ]
       },
       tires: {
         input: 'Нужно переобуть Audi сегодня',
         service: 'Шиномонтаж',
-        estimate: '$40-90',
+        estimate: '18-40 тыс. ₸',
         urgency: 'Сегодня',
         car: 'Audi A6, 2018',
         time: 'Сегодня после 18:00',
@@ -469,14 +520,14 @@
           ['bot', 'Есть окно сегодня после 18:00. Записать вас?'],
           ['client', 'Да, запишите.'],
           ['bot', 'Оставьте имя и телефон. Мастер подтвердит точное время.'],
-          ['client', 'Игорь, +7 999 444-22-11.'],
+          ['client', 'Игорь, +7 701 444-22-11.'],
           ['bot', 'Заявку передал мастеру. Он подтвердит запись.']
         ]
       },
       diagnostic: {
         input: 'Горит чек, нужна диагностика',
         service: 'Компьютерная диагностика',
-        estimate: '$30-120',
+        estimate: '15-55 тыс. ₸',
         urgency: 'Высокая',
         car: 'Toyota Camry, 2019',
         time: 'Сегодня',
@@ -488,14 +539,14 @@
           ['bot', 'Можно начать с компьютерной диагностики. Вам удобнее сегодня или завтра?'],
           ['client', 'Сегодня.'],
           ['bot', 'Хорошо. Оставьте имя и телефон, мастер уточнит симптомы и время приезда.'],
-          ['client', 'Марина, +7 999 888-10-10.'],
+          ['client', 'Марина, +7 707 888-10-10.'],
           ['bot', 'Заявку создал. Мастер скоро свяжется.']
         ]
       },
       body: {
         input: 'Сколько будет стоить покрасить бампер?',
         service: 'Кузовной ремонт',
-        estimate: '$180-500',
+        estimate: '80-230 тыс. ₸',
         urgency: 'Нужны фото',
         car: 'Mercedes E-class, 2020',
         time: 'На этой неделе',
@@ -507,7 +558,7 @@
           ['bot', 'Для точной оценки нужны 2-3 фото повреждения и цвет детали. Можете отправить фото?'],
           ['client', 'Да, отправлю. Хочу на этой неделе.'],
           ['bot', 'Отлично. Оставьте имя и телефон, мастер посмотрит фото и даст оценку.'],
-          ['client', 'Сергей, +7 999 777-55-33.'],
+          ['client', 'Сергей, +7 705 777-55-33.'],
           ['bot', 'Заявку передал мастеру. Он запросит фото и рассчитает стоимость.']
         ]
       }
@@ -536,7 +587,7 @@
     function createLead() {
       rows.innerHTML = `
         <tr>
-          <td>Алексей<br><small>+7 999 123-45-67</small></td>
+          <td>Алексей<br><small>+7 777 123-45-67</small></td>
           <td>${activeScenario.car}<br><small>${activeScenario.service}</small></td>
           <td><span class="money">${activeScenario.estimate}</span></td>
           <td>${activeScenario.urgency}<br><small>${activeScenario.next}</small></td>
@@ -545,7 +596,7 @@
       `;
       leadsCount.textContent = '1';
       statusText.textContent = 'Лид создан';
-      notice.textContent = `Telegram мастеру: новая заявка, ${activeScenario.car}, ${activeScenario.service}, ${activeScenario.time}. ${activeScenario.next}.`;
+      notice.textContent = `WhatsApp/Telegram мастеру: новая заявка, ${activeScenario.car}, ${activeScenario.service}, ${activeScenario.time}. ${activeScenario.next}.`;
       updateOwnerPanel(activeScenario);
     }
 
@@ -554,17 +605,17 @@
         <tr>
           <td>${manualLead.name || 'Клиент'}<br><small>${manualLead.phone || 'Телефон уточнить'}</small></td>
           <td>${manualLead.car || 'Авто уточнить'}<br><small>${manualLead.service || 'Диагностика / консультация'}</small></td>
-          <td><span class="money">${manualLead.estimate || '$100-400'}</span></td>
+          <td><span class="money">${manualLead.estimate || '45-180 тыс. ₸'}</span></td>
           <td>${manualLead.urgency || 'Новая'}<br><small>Связаться и подтвердить детали</small></td>
           <td><span class="status">Новая заявка</span></td>
         </tr>
       `;
       leadsCount.textContent = '1';
       statusText.textContent = 'Лид создан';
-      notice.textContent = `Telegram мастеру: новая заявка, ${manualLead.car || 'авто уточнить'}, ${manualLead.service || 'услуга уточнить'}, ${manualLead.time || 'время уточнить'}.`;
+      notice.textContent = `WhatsApp/Telegram мастеру: новая заявка, ${manualLead.car || 'авто уточнить'}, ${manualLead.service || 'услуга уточнить'}, ${manualLead.time || 'время уточнить'}.`;
       updateOwnerPanel({
         service: manualLead.service || 'Заявка из чата',
-        estimate: manualLead.estimate || '$100-400',
+        estimate: manualLead.estimate || '45-180 тыс. ₸',
         next: 'Связаться и подтвердить детали'
       });
     }
@@ -573,7 +624,7 @@
       ownerSpeed.textContent = 'Ответ за 5 секунд';
       ownerData.textContent = `${data.service} в CRM`;
       ownerNext.textContent = data.next || 'Следующий шаг назначен';
-      ownerReport.textContent = `Потенциальный чек ${data.estimate || '$100-400'}`;
+      ownerReport.textContent = `Потенциальный чек ${data.estimate || '45-180 тыс. ₸'}`;
     }
 
     function resetOwnerPanel() {
@@ -671,11 +722,11 @@
 
     function getEstimate(text) {
       const lower = text.toLowerCase();
-      if (lower.includes('шиномонтаж') || lower.includes('переоб')) return '$40-90';
-      if (lower.includes('диагност') || lower.includes('чек')) return '$30-120';
-      if (lower.includes('бампер') || lower.includes('покрас') || lower.includes('кузов')) return '$180-500';
-      if (lower.includes('полиров') || lower.includes('детейл')) return '$250-600';
-      return '$100-400';
+      if (lower.includes('шиномонтаж') || lower.includes('переоб')) return '18-40 тыс. ₸';
+      if (lower.includes('диагност') || lower.includes('чек')) return '15-55 тыс. ₸';
+      if (lower.includes('бампер') || lower.includes('покрас') || lower.includes('кузов')) return '80-230 тыс. ₸';
+      if (lower.includes('полиров') || lower.includes('детейл')) return '120-280 тыс. ₸';
+      return '45-180 тыс. ₸';
     }
 
     function getUrgency(text) {
