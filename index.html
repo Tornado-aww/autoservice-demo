@@ -31,6 +31,9 @@
       display: grid;
       grid-template-columns: 340px 1fr;
     }
+    .mobile-cta {
+      display: none;
+    }
     aside {
       background: var(--dark);
       color: white;
@@ -347,7 +350,16 @@
     }
     @media (max-width: 980px) {
       .app { grid-template-columns: 1fr; }
-      aside { padding: 22px; }
+      aside {
+        padding: 20px;
+        gap: 16px;
+      }
+      .price { display: none; }
+      .aside-note { display: none; }
+      .points {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px 14px;
+      }
       main { grid-template-columns: 1fr; padding: 18px; }
       .toolbar { align-items: flex-start; flex-direction: column; }
       .setup-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -355,19 +367,104 @@
       .chat { height: 560px; }
     }
     @media (max-width: 560px) {
+      body { padding-bottom: 72px; }
+      .mobile-cta {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 20;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        padding: 10px 12px;
+        background: rgba(255,255,255,.96);
+        border-top: 1px solid var(--line);
+        backdrop-filter: blur(8px);
+      }
+      .mobile-cta span {
+        align-self: center;
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.25;
+      }
+      .mobile-cta button {
+        min-height: 40px;
+        padding: 9px 12px;
+      }
+      aside {
+        padding: 18px 16px;
+      }
+      .subtitle {
+        font-size: 14px;
+        margin-bottom: 0;
+      }
+      .points {
+        grid-template-columns: 1fr;
+        font-size: 13px;
+      }
+      main { padding: 14px; gap: 14px; }
       .metrics { grid-template-columns: 1fr; }
-      .setup-strip { grid-template-columns: 1fr; }
-      .scenario-bar { grid-template-columns: 1fr; }
+      .setup-strip {
+        display: none;
+      }
+      .scenario-bar {
+        display: flex;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        scroll-snap-type: x mandatory;
+      }
+      .scenario {
+        min-width: 178px;
+        scroll-snap-align: start;
+        min-height: 74px;
+      }
       .owner-panel { grid-template-columns: 1fr; }
       h1 { font-size: 24px; }
+      .lead { font-size: 14px; }
       .brand { font-size: 24px; }
+      .actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr auto;
+      }
+      .actions button {
+        width: 100%;
+      }
+      .chat {
+        height: min(540px, 72vh);
+      }
+      .panel-head {
+        min-height: 50px;
+        padding: 12px;
+      }
+      .messages {
+        padding: 12px;
+        gap: 10px;
+      }
       .msg { max-width: 94%; }
+      .inputbar {
+        grid-template-columns: 1fr;
+        padding: 10px;
+      }
+      input, button {
+        font-size: 15px;
+      }
+      input {
+        width: 100%;
+      }
       table { font-size: 13px; }
       th:nth-child(4), td:nth-child(4), th:nth-child(5), td:nth-child(5) { display: none; }
+      .metric { min-height: auto; }
+      .metric strong { font-size: 22px; }
     }
   </style>
 </head>
 <body>
+  <div class="mobile-cta">
+    <span>Откройте сценарий и нажмите демо</span>
+    <button id="mobileRunDemo">Демо</button>
+  </div>
   <div class="app">
     <aside>
       <div>
@@ -769,6 +866,7 @@
     }
 
     document.getElementById('runDemo').addEventListener('click', runDemo);
+    document.getElementById('mobileRunDemo').addEventListener('click', runDemo);
     document.getElementById('resetDemo').addEventListener('click', reset);
     document.querySelectorAll('.scenario').forEach(card => {
       card.addEventListener('click', () => {
