@@ -816,7 +816,7 @@
       `;
       leadsCount.textContent = '1';
       statusText.textContent = 'Лид создан';
-      notice.textContent = `WhatsApp/Telegram мастеру: новая заявка, ${manualLead.car || 'авто уточнить'}, ${manualLead.service || 'услуга уточнить'}, ${manualLead.time || 'время уточнить'}.`;
+      notice.textContent = `Мастеру отправлено: ${manualLead.car || 'авто уточнить'}, ${manualLead.service || 'услуга уточнить'}, ${manualLead.time || 'время уточнить'}. Следующий шаг - связаться с клиентом и подтвердить детали.`;
       updateOwnerPanel({
         service: manualLead.service || 'Заявка из чата',
         estimate: manualLead.estimate || '45-180 тыс. ₸',
@@ -865,7 +865,7 @@
     }
 
     function extractPhone(text) {
-      const match = text.match(/(?:\+?\d[\d\s()\-]{6,}\d)/);
+      const match = text.match(/(?:\+?7|8)[\d\s()\-]{8,}\d/);
       return match ? match[0].trim() : '';
     }
 
@@ -928,29 +928,35 @@
     function nextMissingFieldReply() {
       if (!manualLead.car) {
         manualStep = 1;
-        return 'Спасибо. Чтобы оформить заявку, напишите марку, модель и год авто.';
+        if (manualLead.service) {
+          return `Подскажу по услуге: ${manualLead.service}. Цена и время зависят от автомобиля и состояния. Напишите, пожалуйста, марку, модель и год авто.`;
+        }
+        return 'Подскажу. Чтобы сориентировать по цене и времени, напишите, пожалуйста, марку, модель и год авто.';
       }
       if (!manualLead.service) {
         manualStep = 2;
-        return 'Понял авто. Уточните, пожалуйста, услугу: диагностика, полировка, шиномонтаж, кузовной ремонт, химчистка или оклейка.';
+        return `Понял, ${manualLead.car}. Какая услуга нужна: диагностика, полировка, шиномонтаж, кузовной ремонт, химчистка или оклейка?`;
       }
       if (!manualLead.time) {
         manualStep = 3;
-        return 'Понял задачу. Когда вам удобно приехать: сегодня, завтра или в другой день?';
+        return `Понял задачу: ${manualLead.service}. Мастер сможет точнее сориентировать после осмотра. Когда вам удобно приехать: сегодня, завтра или в другой день?`;
       }
       if (!manualLead.phone) {
         manualStep = 4;
-        return 'Почти готово. Оставьте имя и номер телефона, мастер подтвердит точное время.';
+        return 'Отлично, предварительно все понял. Оставьте, пожалуйста, имя и номер телефона, мастер свяжется и подтвердит точное время.';
       }
       createManualLead();
       manualStep = 5;
-      return `Спасибо${manualLead.name ? ', ' + manualLead.name : ''}. Передал заявку мастеру: ${manualLead.car}, ${manualLead.service}, ${manualLead.time}. Он свяжется с вами и подтвердит запись.`;
+      return `Спасибо${manualLead.name ? ', ' + manualLead.name : ''}. Передал мастеру заявку: ${manualLead.car}, ${manualLead.service}, ${manualLead.time}. Он свяжется с вами и подтвердит детали.`;
     }
 
     function getManualReply(text) {
       const lower = text.toLowerCase();
+      if (manualStep === 5) {
+        return 'Заявка уже передана мастеру. Если хотите изменить авто, услугу или время, напишите новые данные одним сообщением.';
+      }
       if (isRudeOrNoise(text)) {
-        return 'Я могу помочь с записью. Напишите, пожалуйста, марку, модель и год авто, например: Porsche 911, 2018.';
+        return 'Я помогу с заявкой. Напишите, пожалуйста, марку, модель и год авто, а дальше сориентирую по следующему шагу.';
       }
 
       const parsedLead = parseLeadFromText(text);
@@ -964,28 +970,31 @@
         if (isCarInfo(text)) {
           manualLead.car = text;
           manualStep = 2;
-          return 'Понял. Что нужно сделать: диагностика, полировка, детейлинг, ремонт или другая услуга?';
+          return `Понял, ${manualLead.car}. Что нужно сделать: диагностика, полировка, детейлинг, ремонт или другая услуга?`;
         }
         manualStep = 1;
-        return 'Здравствуйте. Подскажу. Какая у вас марка, модель и год авто?';
+        if (isServiceInfo(text)) {
+          return nextMissingFieldReply();
+        }
+        return 'Здравствуйте! Подскажу. Для точной оценки напишите, пожалуйста, марку, модель и год авто.';
       }
 
       if (manualStep === 1) {
         if (!manualLead.car && !isCarInfo(text)) {
-          return 'Чтобы мастер понял заявку, напишите марку, модель и год авто. Например: Toyota Camry, 2019.';
+          return 'Чтобы сориентировать по цене и времени, нужна машина. Напишите, пожалуйста, марку, модель и год авто. Например: Toyota Camry, 2019.';
         }
         if (!manualLead.car) manualLead.car = text;
         if (manualLead.service || manualLead.time || manualLead.phone) return nextMissingFieldReply();
         manualStep = 2;
         if (lower.includes('911') || lower.includes('porsche') || lower.includes('порш')) {
-          return 'Отлично, Porsche 911. Что нужно сделать: диагностика, полировка, детейлинг, ремонт или другая услуга?';
+          return 'Отлично, Porsche 911. Что планируете сделать: диагностику, полировку, детейлинг, ремонт или другую услугу?';
         }
         return 'Спасибо. Что нужно сделать: диагностика, полировка, детейлинг, ремонт или другая услуга?';
       }
 
       if (manualStep === 2) {
         if (!manualLead.service && !isServiceInfo(text)) {
-          return 'Уточните, пожалуйста, услугу: диагностика, полировка, шиномонтаж, кузовной ремонт, химчистка или оклейка.';
+          return 'Понял. Уточните, пожалуйста, какая услуга нужна: диагностика, полировка, шиномонтаж, кузовной ремонт, химчистка или оклейка.';
         }
         if (!manualLead.service) {
           manualLead.service = text;
@@ -994,30 +1003,30 @@
         }
         if (manualLead.time || manualLead.phone) return nextMissingFieldReply();
         manualStep = 3;
-        return 'Понял. Когда вам удобно приехать: сегодня, завтра или в другой день?';
+        return `Понял, ${manualLead.service}. Когда вам удобно приехать: сегодня, завтра или в другой день?`;
       }
 
       if (manualStep === 3) {
         if (!manualLead.time && !isTimeInfo(text)) {
-          return 'Напишите удобное время или день. Например: сегодня после 18:00, завтра утром или в субботу.';
+          return 'Напишите, пожалуйста, удобный день или время. Например: сегодня после 18:00, завтра утром или в субботу.';
         }
         if (!manualLead.time) manualLead.time = text;
         if (manualLead.phone) return nextMissingFieldReply();
         manualStep = 4;
-        return 'Хорошо. Оставьте, пожалуйста, имя и номер телефона. Мастер подтвердит точное время.';
+        return 'Хорошо, передам мастеру желаемое время. Оставьте, пожалуйста, имя и номер телефона для подтверждения записи.';
       }
 
-      const phoneMatch = manualLead.phone || text.match(/(?:\+?\d[\d\s()\-]{6,}\d)/);
+      const phoneMatch = manualLead.phone || text.match(/(?:\+?7|8)[\d\s()\-]{8,}\d/);
       if (phoneMatch) {
         const phoneValue = Array.isArray(phoneMatch) ? phoneMatch[0] : phoneMatch;
         manualLead.phone = phoneValue;
         manualLead.name = manualLead.name || text.replace(phoneValue, '').replace(/[,.]/g, '').trim() || 'Клиент';
         createManualLead();
         manualStep = 5;
-        return 'Спасибо, заявку передал мастеру. Он свяжется с вами и подтвердит время.';
+        return 'Спасибо, заявку передал мастеру. Он свяжется с вами, уточнит детали и подтвердит время.';
       }
 
-      return 'Принял. Чтобы завершить заявку, напишите, пожалуйста, имя и номер телефона.';
+      return 'Принял. Чтобы мастер мог связаться и подтвердить запись, напишите, пожалуйста, имя и номер телефона.';
     }
 
     function safeManualReply(text) {
@@ -1027,7 +1036,7 @@
         console.error(error);
         return currentLang === 'kz'
           ? 'Хабарламаңызды алдым. Өтінімді рәсімдеу үшін авто, қызмет, ыңғайлы уақыт және телефон нөміріңізді жазыңыз.'
-          : 'Сообщение получил. Чтобы оформить заявку, напишите авто, услугу, удобное время и номер телефона.';
+          : 'Сообщение получил. Напишите, пожалуйста, авто, нужную услугу, удобное время и телефон — передам заявку мастеру.';
       }
     }
 
