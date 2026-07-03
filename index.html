@@ -756,10 +756,94 @@
       return /\b\d{1,2}[:.]\d{2}\b/.test(lower) || /\b\d{1,2}\b/.test(lower) || ['сегодня', 'завтра', 'послезавтра', 'утром', 'днем', 'днём', 'вечером', 'выходн', 'понедельник', 'вторник', 'сред', 'четверг', 'пятниц', 'суббот', 'воскрес'].some(word => lower.includes(word));
     }
 
+    function extractName(text, phone) {
+      const withoutPhone = phone ? text.replace(phone, '') : text;
+      const nameMatch = withoutPhone.match(/(?:меня зовут|я|имя)\s+([А-Яа-яA-Za-z]{2,})/i);
+      if (nameMatch) return nameMatch[1].trim();
+      const commaName = withoutPhone.split(',').map(part => part.trim()).find(part => /^[А-Яа-яA-Za-z]{2,}$/.test(part));
+      return commaName || '';
+    }
+
+    function parseLeadFromText(text) {
+      const lower = text.toLowerCase();
+      const phone = extractPhone(text);
+      const lead = {
+        car: isCarInfo(text) ? text : '',
+        service: isServiceInfo(text) ? text : '',
+        time: isTimeInfo(text) ? text : '',
+        phone,
+        name: extractName(text, phone)
+      };
+
+      const serviceHints = [
+        ['шиномонтаж', 'Шиномонтаж'],
+        ['переоб', 'Шиномонтаж'],
+        ['диагност', 'Диагностика'],
+        ['полиров', 'Полировка'],
+        ['детейл', 'Детейлинг'],
+        ['химчист', 'Химчистка'],
+        ['покрас', 'Покраска'],
+        ['бампер', 'Кузовной ремонт'],
+        ['кузов', 'Кузовной ремонт'],
+        ['оклей', 'Оклейка пленкой'],
+        ['пленк', 'Оклейка пленкой']
+      ];
+      const matchedService = serviceHints.find(([hint]) => lower.includes(hint));
+      if (matchedService) lead.service = matchedService[1];
+
+      const carMatch = text.match(/((?:BMW|Mercedes|Audi|Toyota|Lexus|Kia|Hyundai|Porsche|Nissan|Volkswagen|Порш|Лада|ВАЗ|Camry)[^,.!?\\n]{0,35}(?:\\b\\d{4}\\b|\\b\\d{2}\\s*год|911)?)/i);
+      if (carMatch) lead.car = carMatch[1].trim();
+
+      const timeMatch = text.match(/((?:сегодня|завтра|послезавтра|в субботу|в воскресенье|на выходных|после\\s*\\d{1,2}(?::\\d{2})?|до\\s*\\d{1,2}(?::\\d{2})?|\\d{1,2}[:.]\\d{2})[^,.!?\\n]{0,30})/i);
+      if (timeMatch) lead.time = timeMatch[1].trim();
+
+      return lead;
+    }
+
+    function applyParsedLead(parsed) {
+      if (parsed.car) manualLead.car = parsed.car;
+      if (parsed.service) {
+        manualLead.service = parsed.service;
+        manualLead.estimate = getEstimate(parsed.service);
+        manualLead.urgency = getUrgency(parsed.service + ' ' + parsed.time);
+      }
+      if (parsed.time) manualLead.time = parsed.time;
+      if (parsed.phone) manualLead.phone = parsed.phone;
+      if (parsed.name) manualLead.name = parsed.name;
+    }
+
+    function nextMissingFieldReply() {
+      if (!manualLead.car) {
+        manualStep = 1;
+        return 'Спасибо. Чтобы оформить заявку, напишите марку, модель и год авто.';
+      }
+      if (!manualLead.service) {
+        manualStep = 2;
+        return 'Понял авто. Уточните, пожалуйста, услугу: диагностика, полировка, шиномонтаж, кузовной ремонт, химчистка или оклейка.';
+      }
+      if (!manualLead.time) {
+        manualStep = 3;
+        return 'Понял задачу. Когда вам удобно приехать: сегодня, завтра или в другой день?';
+      }
+      if (!manualLead.phone) {
+        manualStep = 4;
+        return 'Почти готово. Оставьте имя и номер телефона, мастер подтвердит точное время.';
+      }
+      createManualLead();
+      manualStep = 5;
+      return `Спасибо${manualLead.name ? ', ' + manualLead.name : ''}. Передал заявку мастеру: ${manualLead.car}, ${manualLead.service}, ${manualLead.time}. Он свяжется с вами и подтвердит запись.`;
+    }
+
     function getManualReply(text) {
       const lower = text.toLowerCase();
       if (isRudeOrNoise(text)) {
         return 'Я могу помочь с записью. Напишите, пожалуйста, марку, модель и год авто, например: Porsche 911, 2018.';
+      }
+
+      const parsedLead = parseLeadFromText(text);
+      applyParsedLead(parsedLead);
+      if (manualStep === 0 && (parsedLead.car || parsedLead.service || parsedLead.time || parsedLead.phone)) {
+        return nextMissingFieldReply();
       }
 
       if (manualStep === 0) {
@@ -774,10 +858,11 @@
       }
 
       if (manualStep === 1) {
-        if (!isCarInfo(text)) {
+        if (!manualLead.car && !isCarInfo(text)) {
           return 'Чтобы мастер понял заявку, напишите марку, модель и год авто. Например: Toyota Camry, 2019.';
         }
-        manualLead.car = text;
+        if (!manualLead.car) manualLead.car = text;
+        if (manualLead.service || manualLead.time || manualLead.phone) return nextMissingFieldReply();
         manualStep = 2;
         if (lower.includes('911') || lower.includes('porsche') || lower.includes('порш')) {
           return 'Отлично, Porsche 911. Что нужно сделать: диагностика, полировка, детейлинг, ремонт или другая услуга?';
@@ -786,29 +871,34 @@
       }
 
       if (manualStep === 2) {
-        if (!isServiceInfo(text)) {
+        if (!manualLead.service && !isServiceInfo(text)) {
           return 'Уточните, пожалуйста, услугу: диагностика, полировка, шиномонтаж, кузовной ремонт, химчистка или оклейка.';
         }
-        manualLead.service = text;
-        manualLead.estimate = getEstimate(text);
-        manualLead.urgency = getUrgency(text);
+        if (!manualLead.service) {
+          manualLead.service = text;
+          manualLead.estimate = getEstimate(text);
+          manualLead.urgency = getUrgency(text);
+        }
+        if (manualLead.time || manualLead.phone) return nextMissingFieldReply();
         manualStep = 3;
         return 'Понял. Когда вам удобно приехать: сегодня, завтра или в другой день?';
       }
 
       if (manualStep === 3) {
-        if (!isTimeInfo(text)) {
+        if (!manualLead.time && !isTimeInfo(text)) {
           return 'Напишите удобное время или день. Например: сегодня после 18:00, завтра утром или в субботу.';
         }
-        manualLead.time = text;
+        if (!manualLead.time) manualLead.time = text;
+        if (manualLead.phone) return nextMissingFieldReply();
         manualStep = 4;
         return 'Хорошо. Оставьте, пожалуйста, имя и номер телефона. Мастер подтвердит точное время.';
       }
 
-      const phoneMatch = text.match(/(?:\+?\d[\d\s()\-]{6,}\d)/);
+      const phoneMatch = manualLead.phone || text.match(/(?:\+?\d[\d\s()\-]{6,}\d)/);
       if (phoneMatch) {
-        manualLead.phone = phoneMatch[0];
-        manualLead.name = text.replace(phoneMatch[0], '').replace(/[,.]/g, '').trim() || 'Клиент';
+        const phoneValue = Array.isArray(phoneMatch) ? phoneMatch[0] : phoneMatch;
+        manualLead.phone = phoneValue;
+        manualLead.name = manualLead.name || text.replace(phoneValue, '').replace(/[,.]/g, '').trim() || 'Клиент';
         createManualLead();
         manualStep = 5;
         return 'Спасибо, заявку передал мастеру. Он свяжется с вами и подтвердит время.';
